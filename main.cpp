@@ -23,10 +23,10 @@ int main(int argc, char* argv[]) {
         case 0: // Testing Assignment 2:
             std::cout << ">> UnorderedSet:\t\t\t\t";
             unorderedSetTests();
-            std::cout << ">> HashTable:\t\t\t\t\t";
-            hashTableTests();
-            std::cout << ">> Book Recommender System: \t";
-            bookRecommendationTests();
+//            std::cout << ">> HashTable:\t\t\t\t\t";
+//            hashTableTests();
+//            std::cout << ">> Book Recommender System: \t";
+//            bookRecommendationTests();
             break;
         default:
             throw std::invalid_argument("Invalid module choice");

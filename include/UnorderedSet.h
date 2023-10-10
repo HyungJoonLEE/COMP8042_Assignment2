@@ -9,7 +9,7 @@
  */
 #include <iostream>
 
-enum class Color { RED, BLACK };
+enum class Color { RED, BLACK, BLUE };
 
 template <typename Key>
 struct Node {
@@ -98,6 +98,7 @@ private:
     //Recursively clears the Red-Black Tree starting from the given node:
     void clearRecursive(Node<Key>* node);
 };
+
 
 #include "../src/UnorderedSet.cpp"
 
