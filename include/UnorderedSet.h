@@ -81,20 +81,28 @@ public:
 private:
     size_t setSize;
     // TODO implement the following functions in ../src/UnorderedSet.cpp
+
     //Recursively updates the size of the subtree rooted at the given node:
     void updateSize();
+
     //Recursively calculates the size of the subtree rooted at the given node:
     size_t getSize(Node<Key>* node) const;
+
     //Fixes a Red-Red violation in the Red-Black Tree:
     void fixRedRedViolation(Node<Key>* node);
+
     //Performs a left rotation on the subtree rooted at the given node:
     void rotateLeft(Node<Key>* node);
+
     //Performs a right rotation on the subtree rooted at the given node:
     void rotateRight(Node<Key>* node);
+
     //Deletes a node with only one child in the Red-Black Tree:
     void deleteOneChild(Node<Key>* node);
+
     //Fixes the Red-Black Tree properties after a node deletion:
     void deleteFix(Node<Key>* node);
+
     //Recursively clears the Red-Black Tree starting from the given node:
     void clearRecursive(Node<Key>* node);
 };
