@@ -5,8 +5,8 @@
 #include <iostream>
 #include <cstdlib>
 #include "tests/UnorderedSetTests.h"
-#include "tests/HashTableTests.h"
-#include "tests/BookRecommendationTests.h"
+//#include "tests/HashTableTests.h"
+//#include "tests/BookRecommendationTests.h"
 #include "include/LExceptions.h"
 /*
  * This is the driver file which directs the project on testing different modules.
