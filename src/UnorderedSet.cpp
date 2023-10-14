@@ -34,21 +34,24 @@ typename UnorderedSet<Key>::Iterator UnorderedSet<Key>::end() const {
 }
 
 
-// TODO:
 template<typename Key>
 bool UnorderedSet<Key>::insert(const Key &key) {
-    Node<Key>* cNode = root;
-    Node<Key>* pNode = nullptr;
+    Node<Key> *cNode = nullptr, *pNode = nullptr;
+
     auto* newNode = new Node<Key>(key);
     newNode->color = Color::RED;
+    newNode->left = nullptr;
+    newNode->right = nullptr;
 
     if (!root) {
         root = newNode;
         root->color = Color::BLACK;
+        root->parent = nullptr;
         setSize++;
         return true;
     }
 
+    cNode = root;
     while (cNode) {
         pNode = cNode;
         if (key < cNode->key) cNode = cNode->left;
@@ -65,13 +68,11 @@ bool UnorderedSet<Key>::insert(const Key &key) {
     newNode->parent = pNode;
     setSize++;
 
-//
-//    while(root) {
-//        gets
-//    }
-//
+    if (setSize > 3)
+        fixRedRedViolation(newNode);
 
     return true;
+
 }
 
 
@@ -134,13 +135,13 @@ void UnorderedSet<Key>::clear() {
 
 template<typename Key>
 size_t UnorderedSet<Key>::size() const {
-    return getSize(root);
+    return setSize;
 }
 
 
 template<typename Key>
 void UnorderedSet<Key>::updateSize() {
-
+    getSize(root);
 }
 
 
@@ -150,25 +151,75 @@ size_t UnorderedSet<Key>::getSize(Node<Key> *node) const {
     if (node == nullptr)
         return 0;
     else
-        return(getSize(node->left) + 1 + getSize(node->right));
+        return getSize(node->left) + 1 + getSize(node->right);
 }
 
 
 template<typename Key>
 void UnorderedSet<Key>::fixRedRedViolation(Node<Key> *node) {
+    while(node != root && node->parent->color != Color::RED) {
+        Node<Key> *grandparent = node->parent->parent;
+        Node<Key> *uncle = (node->parent == grandparent->left) ? grandparent->right : grandparent->left;
+        bool side = (node->parent == grandparent->left) ? true : false;
 
+        if (uncle && uncle->color == Color::RED) {
+            node->parent->color = Color::BLACK;
+            uncle->color = Color::BLACK;
+            grandparent->color = Color::RED;
+            node = grandparent;
+        }
+        else {
+            if (node == (side ? node->parent->right : node->parent->left)) {
+                node = node->parent;
+                side ? rotateLeft(node) : rotateLeft(node);
+            }
+
+            node->parent->color = Color::BLACK;
+            grandparent->color = Color::RED;
+            side ? rotateRight(grandparent) : rotateLeft(grandparent);
+        }
+    }
+    root->color = Color::BLACK;
 }
 
 
 template<typename Key>
 void UnorderedSet<Key>::rotateLeft(Node<Key> *node) {
+    Node<Key>* ptr = nullptr;
 
+    ptr = node->right;
+    node->right = ptr->left;
+    if (ptr->left != nullptr) {
+        ptr->left->parent = node;
+    }
+
+    if (!node->parent) root = ptr;
+    else if (node == node->parent->left) {
+        node->parent->left = ptr;
+    }
+    else node->parent->right = ptr;
+    node->parent = ptr;
+    ptr->left = node;
 }
 
 
 template<typename Key>
 void UnorderedSet<Key>::rotateRight(Node<Key> *node) {
+    Node<Key>* ptr = nullptr;
 
+    ptr = node->left;
+    node->left = ptr->right;
+    if (ptr->right != nullptr) {
+        ptr->right->parent = node;
+    }
+
+    if (!node->parent) root = ptr;
+    else if (node == node->parent->left) {
+        node->parent->left = ptr;
+    }
+    else node->parent->right = ptr;
+    node->parent = ptr;
+    ptr->right = node;
 }
 
 
