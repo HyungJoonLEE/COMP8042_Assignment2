@@ -17,7 +17,8 @@ UnorderedSet<Key>::~UnorderedSet() {
 template <typename Key>
 typename UnorderedSet<Key>::Iterator UnorderedSet<Key>::begin() const {
     Node<Key>* temp = root;
-
+    if (!temp)
+        return Iterator(temp);
     while(temp->left) {
         temp = temp->left;
     }
@@ -88,8 +89,7 @@ bool UnorderedSet<Key>::search(const Key &key) const {
 template<typename Key>
 bool UnorderedSet<Key>::erase(const Key &key) {
     Node<Key>* target = root;
-    Node<Key>* lowest = nullptr;
-
+    Node<Key>* successor = nullptr;
     int size = 0;
 
     if (!search(key)) return false;
@@ -106,22 +106,26 @@ bool UnorderedSet<Key>::erase(const Key &key) {
 
     if (size == 0) {
         if (target == root) root = nullptr;
-        delete(target);
+        else {
+            if (target->parent->left == target) target->parent->left = nullptr;
+            if (target->parent->right == target) target->parent->right = nullptr;
+        }
     }
     else if (size == 1) deleteOneChild(target);
     else {
-        lowest = target->rightChild;
-        while (lowest->leftChild != nullptr) {
-            lowest = lowest->leftChild;
+        successor = target->right;
+        while (successor->left != nullptr) {
+            successor = successor->left;
         }
-        //두 노드를 바꿔주고
-        swap(lowest, target);
 
-        if (target->parent->leftChild == target) target->parent->leftChild = nullptr;
-        else target->parent->rightChild = nullptr;
-
-        delete(target);
+        successor->left = target->left;
+        successor->right = target->right;
+        successor->color = target->color;
+        successor->parent = target->parent;
+        if (target->parent == nullptr) root = successor;
     }
+
+    delete(target);
     setSize--;
 
     return true;
@@ -160,101 +164,149 @@ size_t UnorderedSet<Key>::getSize(Node<Key> *node) const {
 
 template<typename Key>
 void UnorderedSet<Key>::fixRedRedViolation(Node<Key> *node) {
-    Node<Key>* uncle = nullptr;
+    Node<Key> *parent = nullptr;
+    Node<Key> *grandParent = nullptr;
+    Color tempColor = Color::RED;
 
-    while(node->parent->color == Color::RED) {
-        if (node->parent == node->parent->parent->left) {
-            uncle = node->parent->parent->right;
-            if (uncle) {
-                if (uncle->color == Color::RED) {
-                    node->parent->color = Color::BLACK;
-                    uncle->color = Color::BLACK;
-                    node->parent->parent->color = Color::RED;
-                    node = node->parent->parent;
-                }
-                else {
-                    if (node == node->parent->right) {
-                        node = node->parent;
-                        rotateLeft(node);
-                    }
-                    node->parent->color = Color::BLACK;
-                    node->parent->parent->color = Color::RED;
-                    rotateRight(node);
-                }
+    while ((node != root) && (node->color != Color::BLACK) &&
+           (node->parent->color == Color::RED))
+    {
+
+        parent = node->parent;
+        grandParent = node->parent->parent;
+
+        /*  Case : A
+            Parent of pt is left child of Grand-parent of pt */
+        if (parent == grandParent->left)
+        {
+
+            Node<Key> *uncle_pt = grandParent->right;
+
+            /* Case : 1
+               The uncle of pt is also red
+               Only Recoloring required */
+            if (uncle_pt != nullptr && uncle_pt->color == Color::RED)
+            {
+                grandParent->color = Color::RED;
+                parent->color = Color::BLACK;
+                uncle_pt->color = Color::BLACK;
+                node = grandParent;
             }
-            else {
-                if (node == node->parent->left) {
-                    node->parent->color = Color::BLACK;
-                    node->parent->parent->color = Color::RED;
-                    rotateRight(node->parent->parent);
+
+            else
+            {
+                /* Case : 2
+                   pt is right child of its parent
+                   Left-rotation required */
+                if (node == parent->right)
+                {
+                    rotateLeft(parent);
+                    node = parent;
+                    parent = node->parent;
                 }
-                if (node == node->parent->right) {
-                    rotateLeft(node->parent);
-                }
-            }
-        }
-        else {
-            uncle = node->parent->parent->left;
-            if (uncle) {
-                if (uncle->color == Color::RED) {
-                    node->parent->color = Color::BLACK;
-                    uncle->color = Color::BLACK;
-                    node->parent->parent->color = Color::RED;
-                    node = node->parent->parent;
-                } else {
-                    if (node == node->parent->left) {
-                        node = node->parent;
-                        rotateRight(node);
-                    }
-                    node->parent->color = Color::BLACK;
-                    node->parent->parent->color = Color::RED;
-                    rotateLeft(node);
-                }
-            }
-            else {
-                if (node == node->parent->right) {
-                    node->parent->color = Color::BLACK;
-                    node->parent->parent->color = Color::RED;
-                    rotateLeft(node->parent->parent);
-                }
-                if (node == node->parent->left) {
-                    rotateRight(node->parent);
-                }
+
+                /* Case : 3
+                   pt is left child of its parent
+                   Right-rotation required */
+                rotateRight(grandParent);
+                tempColor = parent->color;
+                parent->color = grandParent->color;
+                grandParent->color = tempColor;
+                node = parent;
             }
         }
-        if (!node->parent) break;
+
+            /* Case : B
+               Parent of pt is right child of Grand-parent of pt */
+        else
+        {
+            Node<Key> *uncle_pt = grandParent->left;
+
+            /*  Case : 1
+                The uncle of pt is also red
+                Only Recoloring required */
+            if ((uncle_pt != nullptr) && (uncle_pt->color == Color::RED))
+            {
+                grandParent->color = Color::RED;
+                parent->color = Color::BLACK;
+                uncle_pt->color = Color::BLACK;
+                node = grandParent;
+            }
+            else
+            {
+                /* Case : 2
+                   pt is left child of its parent
+                   Right-rotation required */
+                if (node == parent->left)
+                {
+                    rotateRight(parent);
+                    node = parent;
+                    parent = node->parent;
+                }
+
+                /* Case : 3
+                   pt is right child of its parent
+                   Left-rotation required */
+                rotateLeft(grandParent);
+                tempColor = parent->color;
+                parent->color = grandParent->color;
+                grandParent->color = tempColor;
+                node = parent;
+            }
+        }
     }
+
     root->color = Color::BLACK;
 }
 
 
 template<typename Key>
 void UnorderedSet<Key>::rotateLeft(Node<Key> *node) {
-    Node<Key>* ptr = nullptr;
+    Node<Key> *right = node->right;
 
-    ptr = node->right;
-    node->right = ptr->left;
-    if (ptr->left != nullptr) ptr->left->parent = node;
-    if (node->parent == nullptr) root = ptr;
-    else if (node == node->parent->left) node->parent->left = ptr;
-    else node->parent->right = ptr;
-    node->parent = ptr;
-    ptr->left = node;
+    node->right = right->left;
+
+    if (node->right != nullptr)
+        node->right->parent = node;
+
+    right->parent = node->parent;
+
+    if (node->parent == nullptr)
+        root = right;
+
+    else if (node == node->parent->left)
+        node->parent->left = right;
+
+    else
+        node->parent->right = right;
+
+    right->left = node;
+    node->parent = right;
 }
 
 
 template<typename Key>
 void UnorderedSet<Key>::rotateRight(Node<Key> *node) {
-    Node<Key>* ptr = nullptr;
+    Node<Key> *left = node->left;
 
-    ptr = node->left;
-    node->left = ptr->right;
-    if (ptr->right != nullptr) ptr->right->parent = node;
-    if (node->parent == nullptr) root = ptr;
-    else if (node == node->parent->right) node->parent->right = ptr;
-    else node->parent->left = ptr;
-    node->parent = ptr;
-    ptr->right = node;
+    node->left = left->right;
+
+    if (node->left != nullptr)
+        node->left->parent = node;
+
+    left->parent = node->parent;
+
+    if (node->parent == nullptr)
+        root = left;
+
+    else if (node == node->parent->left)
+        node->parent->left = left;
+
+    else
+        node->parent->right = left;
+
+    left->right = node;
+    node->parent = left;
 }
 
 
@@ -298,7 +350,6 @@ void UnorderedSet<Key>::deleteOneChild(Node<Key> *node) {
         root->color = Color::BLACK;
     }
     if (node == root) root = 0;
-    delete(node);
 }
 
 
