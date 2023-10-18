@@ -1,5 +1,6 @@
 #include "../include/UnorderedSet.h"
 #include "../include/Stack.h"
+#include <iostream>
 
 
 template<typename Key>
@@ -10,7 +11,7 @@ UnorderedSet<Key>::UnorderedSet() {
 
 template<typename Key>
 UnorderedSet<Key>::~UnorderedSet() {
-
+    clearRecursive(root);
 };
 
 
@@ -39,7 +40,6 @@ bool UnorderedSet<Key>::insert(const Key &key) {
     auto* newNode = new Node<Key> (key);
     newNode->color = Color::RED;
     newNode->key = key;
-
 
     if (!root) {
         root = newNode;
@@ -89,8 +89,9 @@ bool UnorderedSet<Key>::search(const Key &key) const {
 template<typename Key>
 bool UnorderedSet<Key>::erase(const Key &key) {
     Node<Key>* target = root;
-    Node<Key>* successor = nullptr;
-    int size = 0;
+    Node<Key>* tempTarget = nullptr;
+    Node<Key>* targetChild = nullptr;
+    Color targetColor;
 
     if (!search(key)) return false;
 
@@ -98,34 +99,56 @@ bool UnorderedSet<Key>::erase(const Key &key) {
         if (key < target->key) target = target->left;
         else if (key > target->key) target = target->right;
         else {
+            targetColor = target->color;
             break;
         }
     }
 
-    size = getSize(target) - 1;
-
-    if (size == 0) {
-        if (target == root) root = nullptr;
-        else {
-            if (target->parent->left == target) target->parent->left = nullptr;
-            if (target->parent->right == target) target->parent->right = nullptr;
-        }
+    if (target == root && target->left == nullptr && target->right == nullptr) {
+        root = nullptr;
     }
-    else if (size == 1) deleteOneChild(target);
     else {
-        successor = target->right;
-        while (successor->left != nullptr) {
-            successor = successor->left;
+        tempTarget = target;
+        if (target->left == nullptr) {
+            targetChild = target->right;
+        } else if (target->right == nullptr) {
+            targetChild = target->left;
+        } else {
+            tempTarget = target->right;
+            while (tempTarget->left != nullptr) {
+                tempTarget = tempTarget->left;
+            }
+            targetColor = tempTarget->color;
+            targetChild = tempTarget->right;
         }
 
-        successor->left = target->left;
-        successor->right = target->right;
-        successor->color = target->color;
-        successor->parent = target->parent;
-        if (target->parent == nullptr) root = successor;
+        // Update the parent of targetChild
+        if (targetChild != nullptr) {
+            targetChild->parent = target->parent;
+        }
+
+        // Update the parent's left or right child pointer to point to targetChild
+        if (target->parent == nullptr) {
+            root = targetChild;
+            if (!root) root = tempTarget;
+            root->color = Color::BLACK;
+        } else if (target == target->parent->left) {
+            target->parent->left = targetChild;
+        } else {
+            target->parent->right = targetChild;
+        }
+
+        // Handle the case where the node has only one child using deleteOneChild
+        if (targetChild != nullptr) {
+            deleteOneChild(target);
+        }
+
+        if (targetColor == Color::BLACK) {
+            deleteFix(targetChild);
+        }
     }
 
-    delete(target);
+    delete target;
     setSize--;
 
     return true;
@@ -176,14 +199,14 @@ void UnorderedSet<Key>::fixRedRedViolation(Node<Key> *node) {
         grandParent = node->parent->parent;
 
         /*  Case : A
-            Parent of pt is left child of Grand-parent of pt */
+            Node Parent is left child of Grand-parent */
         if (parent == grandParent->left)
         {
 
             Node<Key> *uncle_pt = grandParent->right;
 
             /* Case : 1
-               The uncle of pt is also red
+               Uncle is also red
                Only Recoloring required */
             if (uncle_pt != nullptr && uncle_pt->color == Color::RED)
             {
@@ -196,7 +219,7 @@ void UnorderedSet<Key>::fixRedRedViolation(Node<Key> *node) {
             else
             {
                 /* Case : 2
-                   pt is right child of its parent
+                   Node is right child of its parent
                    Left-rotation required */
                 if (node == parent->right)
                 {
@@ -206,7 +229,7 @@ void UnorderedSet<Key>::fixRedRedViolation(Node<Key> *node) {
                 }
 
                 /* Case : 3
-                   pt is left child of its parent
+                   Node is left child of its parent
                    Right-rotation required */
                 rotateRight(grandParent);
                 tempColor = parent->color;
@@ -217,13 +240,13 @@ void UnorderedSet<Key>::fixRedRedViolation(Node<Key> *node) {
         }
 
             /* Case : B
-               Parent of pt is right child of Grand-parent of pt */
+               Node Parent is right child of Grand-parent */
         else
         {
             Node<Key> *uncle_pt = grandParent->left;
 
             /*  Case : 1
-                The uncle of pt is also red
+                Uncle is also red
                 Only Recoloring required */
             if ((uncle_pt != nullptr) && (uncle_pt->color == Color::RED))
             {
@@ -235,7 +258,7 @@ void UnorderedSet<Key>::fixRedRedViolation(Node<Key> *node) {
             else
             {
                 /* Case : 2
-                   pt is left child of its parent
+                   Node is left child of its parent
                    Right-rotation required */
                 if (node == parent->left)
                 {
@@ -245,7 +268,7 @@ void UnorderedSet<Key>::fixRedRedViolation(Node<Key> *node) {
                 }
 
                 /* Case : 3
-                   pt is right child of its parent
+                   Node is right child of its parent
                    Left-rotation required */
                 rotateLeft(grandParent);
                 tempColor = parent->color;
@@ -311,45 +334,28 @@ void UnorderedSet<Key>::rotateRight(Node<Key> *node) {
 
 
 //Deletes a node with only one child in the Red-Black Tree:
-//void rb_transplant(red_black_tree *t, tree_node *u, tree_node *v) {
-//    if(u->parent == t->NIL)
-//        t->root = v;
-//    else if(u == u->parent->left)
-//        u->parent->left = v;
-//    else
-//        u->parent->right = v;
-//    v->parent = u->parent;
-//}
-
-
-//Deletes a node with only one child in the Red-Black Tree:
 template<typename Key>
 void UnorderedSet<Key>::deleteOneChild(Node<Key> *node) {
-    if (node->parent) {
-        if (node->left == nullptr) {                    // Deleting node only has a right child
-            if (node->parent->left == node)
-                node->parent->left = node->right;       // Deleting node is parent' left
-            else
-                node->parent->right = node->right;      // Deleting node is parent' right
+    Node<Key>* child = (node->left != nullptr) ? node->left : node->right;
 
-            node->right->parent = node->parent;
-        }
-        if (node->right == nullptr) {                   // Deleting node only has a left child
-            if (node->parent->left == node)
-                node->parent->left = node->left;        // Deleting node is parent' left
-            else
-                node->parent->right = node->left;
+    // Detach 'node' from its parent
+    if (node->parent == nullptr) {
+        root = child; // 'node' was the root
+    } else if (node == node->parent->left) {
+        node->parent->left = child;
+    } else {
+        node->parent->right = child;
+    }
 
-            node->left->parent = node->parent;
-        }
+    // Update the parent of 'child' if it exists
+    if (child != nullptr) {
+        child->parent = node->parent;
     }
-    else {
-        if (node->left == nullptr) root = node->right;
-        if (node->right == nullptr) root = node->left;
-        root->parent = nullptr;
-        root->color = Color::BLACK;
+
+    // Delete 'node' and adjust Red-Black Tree properties if it was black
+    if (node->color == Color::BLACK) {
+        deleteFix(child);
     }
-    if (node == root) root = 0;
 }
 
 
@@ -409,11 +415,15 @@ void UnorderedSet<Key>::deleteFix(Node<Key> *node) {
         }
     }
     node->color = Color::BLACK;
+    root->color = Color::BLACK;
 }
 
 
 template<typename Key>
 void UnorderedSet<Key>::clearRecursive(Node<Key> *node) {
-
+    if (node == NULL) return;
+    clearRecursive(node->left);
+    clearRecursive(node->right);
+    delete node;
 }
 
