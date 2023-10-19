@@ -89,9 +89,10 @@ bool UnorderedSet<Key>::search(const Key &key) const {
 template<typename Key>
 bool UnorderedSet<Key>::erase(const Key &key) {
     Node<Key>* target = root;
-    Node<Key>* tempTarget = nullptr;
-    Node<Key>* targetChild = nullptr;
+    Node<Key>* parent = nullptr;
+    Node<Key>* temp = nullptr;
     Color targetColor;
+    Color leafColor;
 
     if (!search(key)) return false;
 
@@ -104,53 +105,52 @@ bool UnorderedSet<Key>::erase(const Key &key) {
         }
     }
 
-    if (target == root && target->left == nullptr && target->right == nullptr) {
-        root = nullptr;
+    parent = target->parent;
+
+    // Node with no child
+    if (!target->left && !target->right) {
+        if (!parent) {
+            // Node is root
+            delete root;
+            root = nullptr;
+        }
+        else {
+            if (parent->left == target)
+                parent->left = nullptr;
+            else
+                parent->right = nullptr;
+            delete target;
+        }
     }
+
+    // Node with one child
+    else if ((target->left && !target->right) || (!target->left && target->right)) {
+        deleteOneChild(target);
+    }
+
+    // Node with two children
     else {
-        tempTarget = target;
-        if (target->left == nullptr) {
-            targetChild = target->right;
-        } else if (target->right == nullptr) {
-            targetChild = target->left;
-        } else {
-            tempTarget = target->right;
-            while (tempTarget->left != nullptr) {
-                tempTarget = tempTarget->left;
-            }
-            targetColor = tempTarget->color;
-            targetChild = tempTarget->right;
-        }
+        Node<Key>* successor = target->right;
 
-        // Update the parent of targetChild
-        if (targetChild != nullptr) {
-            targetChild->parent = target->parent;
-        }
+        while (successor->left)
+            successor = successor->left;
 
-        // Update the parent's left or right child pointer to point to targetChild
-        if (target->parent == nullptr) {
-            root = targetChild;
-            if (!root) root = tempTarget;
-            root->color = Color::BLACK;
-        } else if (target == target->parent->left) {
-            target->parent->left = targetChild;
-        } else {
-            target->parent->right = targetChild;
-        }
+        target->key = successor->key; // Copy successor's value to target
+        target->color = successor->color; // Also, make sure to copy the color
 
-        // Handle the case where the node has only one child using deleteOneChild
-        if (targetChild != nullptr) {
-            deleteOneChild(target);
-        }
+        parent = successor->parent;
+        if (parent->left == successor)
+            parent->left = successor->right;  // Assuming successor is always a leaf or has one child (right)
+        else
+            parent->right = successor->right;
 
-        if (targetColor == Color::BLACK) {
-            deleteFix(targetChild);
-        }
+
+        delete successor;
     }
 
-    delete target;
-    setSize--;
+    deleteFix(root);
 
+    setSize--;
     return true;
 }
 
@@ -336,26 +336,25 @@ void UnorderedSet<Key>::rotateRight(Node<Key> *node) {
 //Deletes a node with only one child in the Red-Black Tree:
 template<typename Key>
 void UnorderedSet<Key>::deleteOneChild(Node<Key> *node) {
-    Node<Key>* child = (node->left != nullptr) ? node->left : node->right;
+    Node<Key>* child = (node->left) ? node->left : node->right;  // Determine the existing child
 
-    // Detach 'node' from its parent
-    if (node->parent == nullptr) {
-        root = child; // 'node' was the root
-    } else if (node == node->parent->left) {
-        node->parent->left = child;
+    if (!node->parent) {
+        // Node is root
+        root = child;
+        if (child) {
+            child->parent = nullptr;
+        }
     } else {
-        node->parent->right = child;
-    }
+        if (node->parent->left == node)
+            node->parent->left = child;
+        else
+            node->parent->right = child;
 
-    // Update the parent of 'child' if it exists
-    if (child != nullptr) {
-        child->parent = node->parent;
+        if (child) {
+            child->parent = node->parent;
+        }
     }
-
-    // Delete 'node' and adjust Red-Black Tree properties if it was black
-    if (node->color == Color::BLACK) {
-        deleteFix(child);
-    }
+    delete node;
 }
 
 
