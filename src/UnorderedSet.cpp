@@ -202,8 +202,7 @@ void UnorderedSet<Key>::fixRedRedViolation(Node<Key> *node) {
         parent = node->parent;
         grandParent = node->parent->parent;
 
-        /*  Case : A
-            Node Parent is left child of Grand-parent */
+        /* Node Parent is left child of Grand-parent */
         if (parent == grandParent->left) {
             Node<Key> *uncle_pt = grandParent->right;
 
@@ -237,8 +236,7 @@ void UnorderedSet<Key>::fixRedRedViolation(Node<Key> *node) {
             }
         }
 
-            /* Case : B
-               Node Parent is right child of Grand-parent */
+        /* Node Parent is right child of Grand-parent */
         else {
             Node<Key> *uncle_pt = grandParent->left;
 
@@ -362,11 +360,8 @@ void UnorderedSet<Key>::deleteOneChild(Node<Key> *node) {
 template<typename Key>
 void UnorderedSet<Key>::deleteFix(Node<Key> *node) {
     Node<Key>* sibling;
-    while (node->color == Color::BLUE) {
-        if (node == root) {
-            node->color = Color::BLACK;
-        }
-        else if (node == node->parent->left) {
+    while (node != root && node->color == Color::BLUE) {
+        if (node == node->parent->left) {
             sibling = node->parent->right;
             if (sibling->color == Color::RED) {
                 sibling->color = Color::BLACK;
