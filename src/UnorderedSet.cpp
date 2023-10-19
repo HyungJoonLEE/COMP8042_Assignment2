@@ -1,6 +1,5 @@
 #include "../include/UnorderedSet.h"
 #include "../include/Stack.h"
-#include <iostream>
 
 
 template<typename Key>
@@ -90,9 +89,6 @@ template<typename Key>
 bool UnorderedSet<Key>::erase(const Key &key) {
     Node<Key>* target = root;
     Node<Key>* parent = nullptr;
-    Node<Key>* temp = nullptr;
-    Color targetColor;
-    Color leafColor;
 
     if (!search(key)) return false;
 
@@ -100,7 +96,6 @@ bool UnorderedSet<Key>::erase(const Key &key) {
         if (key < target->key) target = target->left;
         else if (key > target->key) target = target->right;
         else {
-            targetColor = target->color;
             break;
         }
     }
@@ -131,6 +126,7 @@ bool UnorderedSet<Key>::erase(const Key &key) {
     // Node with one child
     else if ((target->left && !target->right) || (!target->left && target->right)) {
         deleteOneChild(target);
+        delete target;
     }
 
     // Node with two children
@@ -148,10 +144,12 @@ bool UnorderedSet<Key>::erase(const Key &key) {
         else
             parent->right = successor->right;
 
-        if (successor->color == Color::RED) delete successor;
+        if (successor->color == Color::RED)
+            delete successor;
         else {
             successor->color == Color::BLUE;
             deleteFix(successor);
+            delete successor;
         }
     }
 
@@ -352,8 +350,6 @@ void UnorderedSet<Key>::deleteOneChild(Node<Key> *node) {
         child->color = Color::BLUE;
         deleteFix(child);
     }
-
-    delete node;
 }
 
 
@@ -394,7 +390,7 @@ void UnorderedSet<Key>::deleteFix(Node<Key> *node) {
                 rotateRight(node->parent);
                 sibling = node->parent->left;
             }
-            if (sibling->right->color == Color::BLACK && sibling->right->color == Color::BLACK) {
+            if (sibling->right->color == Color::BLACK && sibling->left->color == Color::BLACK) {
                 sibling->color = Color::RED;
                 node = node->parent;
             } else {
