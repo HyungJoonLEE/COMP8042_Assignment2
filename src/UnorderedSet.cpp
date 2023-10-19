@@ -119,6 +119,11 @@ bool UnorderedSet<Key>::erase(const Key &key) {
                 parent->left = nullptr;
             else
                 parent->right = nullptr;
+
+            if (target->color == Color::BLACK) {
+                target->color = Color::BLUE;
+                deleteFix(target);
+            }
             delete target;
         }
     }
@@ -136,7 +141,6 @@ bool UnorderedSet<Key>::erase(const Key &key) {
             successor = successor->left;
 
         target->key = successor->key; // Copy successor's value to target
-        target->color = successor->color; // Also, make sure to copy the color
 
         parent = successor->parent;
         if (parent->left == successor)
@@ -144,11 +148,12 @@ bool UnorderedSet<Key>::erase(const Key &key) {
         else
             parent->right = successor->right;
 
-
-        delete successor;
+        if (successor->color == Color::RED) delete successor;
+        else {
+            successor->color == Color::BLUE;
+            deleteFix(successor);
+        }
     }
-
-    deleteFix(root);
 
     setSize--;
     return true;
@@ -192,37 +197,30 @@ void UnorderedSet<Key>::fixRedRedViolation(Node<Key> *node) {
     Color tempColor = Color::RED;
 
     while ((node != root) && (node->color != Color::BLACK) &&
-           (node->parent->color == Color::RED))
-    {
+           (node->parent->color == Color::RED)) {
 
         parent = node->parent;
         grandParent = node->parent->parent;
 
         /*  Case : A
             Node Parent is left child of Grand-parent */
-        if (parent == grandParent->left)
-        {
-
+        if (parent == grandParent->left) {
             Node<Key> *uncle_pt = grandParent->right;
 
             /* Case : 1
                Uncle is also red
                Only Recoloring required */
-            if (uncle_pt != nullptr && uncle_pt->color == Color::RED)
-            {
+            if (uncle_pt != nullptr && uncle_pt->color == Color::RED) {
                 grandParent->color = Color::RED;
                 parent->color = Color::BLACK;
                 uncle_pt->color = Color::BLACK;
                 node = grandParent;
             }
-
-            else
-            {
+            else {
                 /* Case : 2
                    Node is right child of its parent
                    Left-rotation required */
-                if (node == parent->right)
-                {
+                if (node == parent->right) {
                     rotateLeft(parent);
                     node = parent;
                     parent = node->parent;
@@ -241,27 +239,23 @@ void UnorderedSet<Key>::fixRedRedViolation(Node<Key> *node) {
 
             /* Case : B
                Node Parent is right child of Grand-parent */
-        else
-        {
+        else {
             Node<Key> *uncle_pt = grandParent->left;
 
             /*  Case : 1
                 Uncle is also red
                 Only Recoloring required */
-            if ((uncle_pt != nullptr) && (uncle_pt->color == Color::RED))
-            {
+            if ((uncle_pt != nullptr) && (uncle_pt->color == Color::RED)) {
                 grandParent->color = Color::RED;
                 parent->color = Color::BLACK;
                 uncle_pt->color = Color::BLACK;
                 node = grandParent;
             }
-            else
-            {
+            else {
                 /* Case : 2
                    Node is left child of its parent
                    Right-rotation required */
-                if (node == parent->left)
-                {
+                if (node == parent->left) {
                     rotateRight(parent);
                     node = parent;
                     parent = node->parent;
@@ -341,6 +335,7 @@ void UnorderedSet<Key>::deleteOneChild(Node<Key> *node) {
     if (!node->parent) {
         // Node is root
         root = child;
+        child->color = Color::BLACK;
         if (child) {
             child->parent = nullptr;
         }
@@ -354,67 +349,75 @@ void UnorderedSet<Key>::deleteOneChild(Node<Key> *node) {
             child->parent = node->parent;
         }
     }
+
+    if (child->color == Color::BLACK) {
+        child->color = Color::BLUE;
+        deleteFix(child);
+    }
+
     delete node;
 }
 
 
 template<typename Key>
 void UnorderedSet<Key>::deleteFix(Node<Key> *node) {
-    Node<Key>* s;
-    while (node != root && node->color == Color::BLACK) {
-        if (node == node->parent->left) {
-            s = node->parent->right;
-            if (s->color == Color::RED) {
-                s->color = Color::BLACK;
+    Node<Key>* sibling;
+    while (node->color == Color::BLUE) {
+        if (node == root) {
+            node->color = Color::BLACK;
+        }
+        else if (node == node->parent->left) {
+            sibling = node->parent->right;
+            if (sibling->color == Color::RED) {
+                sibling->color = Color::BLACK;
                 node->parent->color = Color::RED;
                 rotateLeft(node->parent);
-                s = node->parent->right;
+                sibling = node->parent->right;
             }
 
-            if (s->left->color == Color::BLACK && s->right->color == Color::BLACK) {
-                s->color = Color::RED;
+            if (sibling->left->color == Color::BLACK && sibling->right->color == Color::BLACK) {
+                sibling->color = Color::RED;
                 node = node->parent;
             } else {
-                if (s->right->color == Color::BLACK) {
-                    s->left->color = Color::BLACK;
-                    s->color = Color::RED;
-                    rotateRight(s);
-                    s = node->parent->right;
+                if (sibling->right->color == Color::BLACK) {
+                    sibling->left->color = Color::BLACK;
+                    sibling->color = Color::RED;
+                    rotateRight(sibling);
+                    sibling = node->parent->right;
                 }
-                s->color = node->parent->color;
+                sibling->color = node->parent->color;
                 node->parent->color = Color::BLACK;
-                s->right->color = Color::BLACK;
+                sibling->right->color = Color::BLACK;
                 rotateLeft(node->parent);
                 node = root;
             }
         } else {
-            s = node->parent->left;
-            if (s->color == Color::RED) {
-                s->color = Color::BLACK;
+            sibling = node->parent->left;
+            if (sibling->color == Color::RED) {
+                sibling->color = Color::BLACK;
                 node->parent->color = Color::RED;
                 rotateRight(node->parent);
-                s = node->parent->left;
+                sibling = node->parent->left;
             }
-            if (s->right->color == Color::BLACK && s->right->color == Color::BLACK) {
-                s->color = Color::RED;
+            if (sibling->right->color == Color::BLACK && sibling->right->color == Color::BLACK) {
+                sibling->color = Color::RED;
                 node = node->parent;
             } else {
-                if (s->left->color == Color::BLACK) {
-                    s->right->color = Color::BLACK;
-                    s->color = Color::RED;
-                    rotateLeft(s);
-                    s = node->parent->left;
+                if (sibling->left->color == Color::BLACK) {
+                    sibling->right->color = Color::BLACK;
+                    sibling->color = Color::RED;
+                    rotateLeft(sibling);
+                    sibling = node->parent->left;
                 }
-                s->color = node->parent->color;
+                sibling->color = node->parent->color;
                 node->parent->color = Color::BLACK;
-                s->left->color = Color::BLACK;
+                sibling->left->color = Color::BLACK;
                 rotateRight(node->parent);
                 node = root;
             }
         }
     }
     node->color = Color::BLACK;
-    root->color = Color::BLACK;
 }
 
 
