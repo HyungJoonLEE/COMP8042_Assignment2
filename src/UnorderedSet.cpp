@@ -144,6 +144,10 @@ bool UnorderedSet<Key>::erase(const Key &key) {
         else
             parent->right = successor->right;
 
+        if (successor->right) {
+            successor->right->parent = successor->parent;
+        }
+
         if (successor->color == Color::RED)
             delete successor;
         else {
@@ -356,9 +360,13 @@ void UnorderedSet<Key>::deleteOneChild(Node<Key> *node) {
 template<typename Key>
 void UnorderedSet<Key>::deleteFix(Node<Key> *node) {
     Node<Key>* sibling;
+
     while (node != root && node->color == Color::BLUE) {
         if (node == node->parent->left) {
             sibling = node->parent->right;
+
+            if (!sibling) break;  // Exit the loop if sibling is nullptr
+
             if (sibling->color == Color::RED) {
                 sibling->color = Color::BLACK;
                 node->parent->color = Color::RED;
@@ -366,48 +374,55 @@ void UnorderedSet<Key>::deleteFix(Node<Key> *node) {
                 sibling = node->parent->right;
             }
 
-            if (sibling->left->color == Color::BLACK && sibling->right->color == Color::BLACK) {
+            if ((!sibling->left || sibling->left->color == Color::BLACK) &&
+                (!sibling->right || sibling->right->color == Color::BLACK)) {
                 sibling->color = Color::RED;
                 node = node->parent;
             } else {
-                if (sibling->right->color == Color::BLACK) {
-                    sibling->left->color = Color::BLACK;
+                if (!sibling->right || sibling->right->color == Color::BLACK) {
+                    if (sibling->left) sibling->left->color = Color::BLACK;
                     sibling->color = Color::RED;
                     rotateRight(sibling);
                     sibling = node->parent->right;
                 }
                 sibling->color = node->parent->color;
                 node->parent->color = Color::BLACK;
-                sibling->right->color = Color::BLACK;
+                if (sibling->right) sibling->right->color = Color::BLACK;
                 rotateLeft(node->parent);
                 node = root;
             }
         } else {
             sibling = node->parent->left;
+
+            if (!sibling) break;  // Exit the loop if sibling is nullptr
+
             if (sibling->color == Color::RED) {
                 sibling->color = Color::BLACK;
                 node->parent->color = Color::RED;
                 rotateRight(node->parent);
                 sibling = node->parent->left;
             }
-            if (sibling->right->color == Color::BLACK && sibling->left->color == Color::BLACK) {
+
+            if ((!sibling->right || sibling->right->color == Color::BLACK) &&
+                (!sibling->left || sibling->left->color == Color::BLACK)) {
                 sibling->color = Color::RED;
                 node = node->parent;
             } else {
-                if (sibling->left->color == Color::BLACK) {
-                    sibling->right->color = Color::BLACK;
+                if (!sibling->left || sibling->left->color == Color::BLACK) {
+                    if (sibling->right) sibling->right->color = Color::BLACK;
                     sibling->color = Color::RED;
                     rotateLeft(sibling);
                     sibling = node->parent->left;
                 }
                 sibling->color = node->parent->color;
                 node->parent->color = Color::BLACK;
-                sibling->left->color = Color::BLACK;
+                if (sibling->left) sibling->left->color = Color::BLACK;
                 rotateRight(node->parent);
                 node = root;
             }
         }
     }
+
     node->color = Color::BLACK;
 }
 
