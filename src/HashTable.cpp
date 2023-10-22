@@ -50,7 +50,7 @@ void HashTable<KeyType, ValueType>::updateValueForKey(const KeyType &key, ValueT
 
 template<typename KeyType, typename ValueType>
 void HashTable<KeyType, ValueType>::insert(const KeyType &key, const ValueType &value) {
-    unsigned int index, offset, hop;
+    unsigned int index = 0, offset = 0, hop = 0, i = 0;
 
     if (loadFactor() >= loadFactorThreshold) {
         rehash();
@@ -74,7 +74,6 @@ void HashTable<KeyType, ValueType>::insert(const KeyType &key, const ValueType &
 
     // No free bucket within hop range, need to move items around
     // This can be enhanced with more advanced strategies
-    unsigned int i = index + hopRange - 1;
     while (true) {
         i = findFreeSlot(hashTable, 0, hop);
         if (!hashTable[i].occupied) {

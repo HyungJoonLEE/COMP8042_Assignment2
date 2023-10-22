@@ -9,7 +9,7 @@ add_executable(8042_Assignment_2
         include/UnorderedSet.h
         include/Stack.h/
         include/HashTable.h
-#        src/BookRecommendation.cpp
+        src/BookRecommendation.cpp
         tests/TestEnvironment.h
         tests/UnorderedSetTests.h
         tests/HashTableTests.h
