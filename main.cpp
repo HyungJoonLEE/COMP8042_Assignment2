@@ -21,8 +21,8 @@ int main(int argc, char* argv[]) {
     }
     switch (module_choice) {
         case 0: // Testing Assignment 2:
-//            std::cout << ">> UnorderedSet:\t\t\t\t";
-//            unorderedSetTests();
+            std::cout << ">> UnorderedSet:\t\t\t\t";
+            unorderedSetTests();
             std::cout << ">> HashTable:\t\t\t\t\t";
             hashTableTests();
 //            std::cout << ">> Book Recommender System: \t";

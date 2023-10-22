@@ -76,7 +76,7 @@ void HashTable<KeyType, ValueType>::insert(const KeyType &key, const ValueType &
     // This can be enhanced with more advanced strategies
     unsigned int i = index + hopRange - 1;
     while (true) {
-        i = (i + 1) % tableSize;
+        i = findFreeSlot(hashTable, 0, hop);
         if (!hashTable[i].occupied) {
             hashTable[i].key = key;
             hashTable[i].value = value;
