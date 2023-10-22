@@ -74,12 +74,16 @@ public:
     unsigned int size() const;
     double loadFactor() const;
 
+
 private:
     unsigned int hopRange = HOP_RANGE;
     // TODO implement the following functions in ../src/HashTable.cpp
     unsigned int findFreeSlot(std::vector<Bucket>& cTable, unsigned int startIndex, unsigned int& currentHop);
     void rehash();
 };
+
+
+
 
 #include "../src/HashTable.cpp"
 

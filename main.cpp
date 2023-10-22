@@ -5,7 +5,7 @@
 #include <iostream>
 #include <cstdlib>
 #include "tests/UnorderedSetTests.h"
-//#include "tests/HashTableTests.h"
+#include "tests/HashTableTests.h"
 //#include "tests/BookRecommendationTests.h"
 #include "include/LExceptions.h"
 /*
@@ -21,10 +21,10 @@ int main(int argc, char* argv[]) {
     }
     switch (module_choice) {
         case 0: // Testing Assignment 2:
-            std::cout << ">> UnorderedSet:\t\t\t\t";
-            unorderedSetTests();
-//            std::cout << ">> HashTable:\t\t\t\t\t";
-//            hashTableTests();
+//            std::cout << ">> UnorderedSet:\t\t\t\t";
+//            unorderedSetTests();
+            std::cout << ">> HashTable:\t\t\t\t\t";
+            hashTableTests();
 //            std::cout << ">> Book Recommender System: \t";
 //            bookRecommendationTests();
             break;
