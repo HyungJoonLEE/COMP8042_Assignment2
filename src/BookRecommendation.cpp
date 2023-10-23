@@ -11,7 +11,16 @@ UnorderedSet<std::string> BookRecommendation::getNeighborhood(const std::string 
 }
 
 double BookRecommendation::calculateSimilarity(const std::string &userID1, const std::string &userID2) {
-    return 0;
+    double count = 0;
+
+    for (const auto& book : userBorrowedBooks[userID1]) {
+        if (userBorrowedBooks[userID2].search(book)) {
+            count++;
+        }
+    }
+
+
+    return count / (double)userBorrowedBooks[userID1].size();
 }
 
 std::vector<Book> BookRecommendation::getBookRecommendations(const std::string &targetUserID, int numRecommendations,
