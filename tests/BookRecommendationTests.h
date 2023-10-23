@@ -31,10 +31,13 @@ BookRecommendation setUp(){
 
 std::pair<int, int> bookRecommendationTestCalculateSimilarity() {
     int passedTests = 0;
+    double var;
     BookRecommendation bookRecommendation = setUp();
     passedTests += assert(bookRecommendation.calculateSimilarity("user1", "user1") == 1.0);
     passedTests += assert(bookRecommendation.calculateSimilarity("user1", "user2") == 0.5);
+    var = bookRecommendation.calculateSimilarity("user1", "user2");
     passedTests += assert(bookRecommendation.calculateSimilarity("user1", "user6") == 0.0);
+    var = bookRecommendation.calculateSimilarity("user1", "user6");
     double d1 = bookRecommendation.calculateSimilarity("user4", "user1");
     double d2 = bookRecommendation.calculateSimilarity("user1", "user4");
     passedTests += assert(d1 == d2);
