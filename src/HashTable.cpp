@@ -86,7 +86,7 @@ void HashTable<KeyType, ValueType>::insert(const KeyType &key, const ValueType &
     }
 }
 
-
+//TODO: change index -> not using hash
 template<typename KeyType, typename ValueType>
 ValueType *HashTable<KeyType, ValueType>::search(const KeyType &key) {
     unsigned int index = std::hash<KeyType>{}(key) % tableSize;

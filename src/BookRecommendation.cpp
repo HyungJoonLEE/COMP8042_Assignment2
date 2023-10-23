@@ -8,8 +8,58 @@ UnorderedSet<Book> BookRecommendation::getRecommendedBooks(const UnorderedSet<st
 }
 
 UnorderedSet<std::string> BookRecommendation::getNeighborhood(const std::string &targetUserID, int neighborhoodSize) {
-    return UnorderedSet<std::string>();
+    struct user_sim {
+        std::string user_id;
+        double similarity;
+    };
+
+    std::vector<std::string> userVec = std::vector<std::string>();
+    std::vector<user_sim> similarityVec = std::vector<user_sim>();
+    Stack<std::string> neighborStack = Stack<std::string>();
+    UnorderedSet<std::string> neighborhoodSet = UnorderedSet<std::string>();
+    unsigned long similarityVecSize = 0;
+    user_sim temp;
+
+    for (const auto& pair : userBorrowedBooks) {
+        userVec.push_back(pair->key);
+    }
+
+    for (const std::string& users : userVec) {
+        user_sim data;
+        if (users == targetUserID) continue;
+        else {
+            data.user_id = users;
+            data.similarity = calculateSimilarity(targetUserID, users);
+            similarityVec.push_back(data);
+        }
+    }
+
+    similarityVecSize = similarityVec.size();
+    for (int i = 0; i < similarityVecSize - 1; i++) {
+        for (int j = 0; j < similarityVecSize - i - 1; j++) {
+            if (similarityVec[j].similarity > similarityVec[j + 1].similarity) {
+                temp = similarityVec[j];
+                similarityVec[j] = similarityVec[j + 1];
+                similarityVec[j + 1] = temp;
+            }
+        }
+    }
+
+    for (int i = 0; i < similarityVecSize; i++) {
+        if (similarityVec[i].similarity > 0) {
+            neighborStack.push(similarityVec[i].user_id);
+        }
+    }
+
+    while (!neighborStack.isEmpty()) {
+        neighborhoodSet.insert(neighborStack.top());
+        neighborStack.pop();
+        if (neighborhoodSet.size() == neighborhoodSize) break;
+    }
+
+    return neighborhoodSet;
 }
+
 
 double BookRecommendation::calculateSimilarity(const std::string &userID1, const std::string &userID2) {
     unsigned long unionSize = 0, intersectionSize = 0;
