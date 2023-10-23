@@ -2,30 +2,70 @@
 #include "../include/Stack.h"
 
 
+// Returns the set of recommended books for the target patron id.
+//
+// For this, using a Stack, search the books that are frequently borrowed by users in the neighborhood and
+// filter out the books that the target user has already borrowed.
+// Then rank the remaining books based on popularity or ratings within the neighborhood
+// and return the set of recommended books.
+// To implement this function:
+// - Create a HashTable to store the frequency of each book borrowed by users in the neighborhood.
+// - Iterate through the frequency map and add books that haven't been borrowed by the target patron id
+// to the recommendedBooks UnorderedSet.
+// return the recommendedBooks UnorderedSet.
 UnorderedSet<Book> BookRecommendation::getRecommendedBooks(const UnorderedSet<std::string> &neighborhood,
                                                            const std::string &targetUserID) {
-    return UnorderedSet<Book>();
+    Stack<Book> bookStack{};
+    UnorderedSet<Book> recommendedBooks{};
+    bool flag = true;
+
+    for (const auto& users : neighborhood) {
+        if (users == targetUserID) continue;
+        else {
+            for (const auto &books: *userBorrowedBooks.search(users)) {
+                bookStack.push(books);
+            }
+        }
+    }
+
+    while (!bookStack.isEmpty()) {
+        for (const auto& targetBook : userBorrowedBooks[targetUserID]) {
+            if (bookStack.top() == targetBook) {
+                bookStack.pop();
+                flag = true;
+                break;
+            }
+        }
+        if (!flag) {
+            recommendedBooks.insert(bookStack.top());
+            bookStack.pop();
+        }
+        flag = false;
+    }
+
+    return recommendedBooks;
 }
 
+
 UnorderedSet<std::string> BookRecommendation::getNeighborhood(const std::string &targetUserID, int neighborhoodSize) {
-    struct user_sim {
+    struct userSimilarity {
         std::string user_id;
         double similarity;
     };
 
-    std::vector<std::string> userVec = std::vector<std::string>();
-    std::vector<user_sim> similarityVec = std::vector<user_sim>();
-    Stack<std::string> neighborStack = Stack<std::string>();
-    UnorderedSet<std::string> neighborhoodSet = UnorderedSet<std::string>();
+    std::vector<std::string> userVec{};
+    std::vector<userSimilarity> similarityVec{};
+    Stack<std::string> neighborStack{};
+    UnorderedSet<std::string> neighborhoodSet{};
     unsigned long similarityVecSize = 0;
-    user_sim temp;
+    userSimilarity temp;
 
     for (const auto& pair : userBorrowedBooks) {
         userVec.push_back(pair->key);
     }
 
     for (const std::string& users : userVec) {
-        user_sim data;
+        userSimilarity data;
         if (users == targetUserID) continue;
         else {
             data.user_id = users;
@@ -94,7 +134,7 @@ double BookRecommendation::calculateSimilarity(const std::string &userID1, const
 
 std::vector<Book> BookRecommendation::getBookRecommendations(const std::string &targetUserID, int numRecommendations,
                                                              int neighborhoodSize) {
-    return std::vector<Book>();
+
 }
 
 void BookRecommendation::addUserBorrowedBook(Patron &userID, Book &book) {
