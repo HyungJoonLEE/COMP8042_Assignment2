@@ -28,6 +28,14 @@ UnorderedSet<Book> BookRecommendation::getRecommendedBooks(const UnorderedSet<st
         }
     }
 
+    for (const auto& users : neighborhood) {
+        for (const auto &book: *userBorrowedBooks.search(users)) {
+            if (!bookBorrowedByUsers.search(book.title)) {
+                bookBorrowedByUsers[book.title] = UnorderedSet<Patron>();
+            }
+        }
+    }
+
     while (!bookStack.isEmpty()) {
         for (const auto& targetBook : userBorrowedBooks[targetUserID]) {
             if (bookStack.top() == targetBook) {
@@ -134,7 +142,25 @@ double BookRecommendation::calculateSimilarity(const std::string &userID1, const
 
 std::vector<Book> BookRecommendation::getBookRecommendations(const std::string &targetUserID, int numRecommendations,
                                                              int neighborhoodSize) {
+    UnorderedSet<std::string> neighborhoodSet{};
+    UnorderedSet<Book> neighborhoodBookSet {};
+    std::vector<Book> recommendations {};
 
+
+    for (const auto& target : getNeighborhood(targetUserID, neighborhoodSize)) {
+        neighborhoodSet.insert(target);
+    }
+
+    for (const auto& book : getRecommendedBooks(neighborhoodSet, targetUserID)) {
+        neighborhoodBookSet.insert(book);
+    }
+
+    for (const auto& book : neighborhoodBookSet) {
+        if (recommendations.size() == numRecommendations) break;
+        recommendations.push_back(book);
+    }
+
+    return recommendations;
 }
 
 void BookRecommendation::addUserBorrowedBook(Patron &userID, Book &book) {
