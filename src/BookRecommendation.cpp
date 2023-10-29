@@ -2,17 +2,6 @@
 #include "../include/Stack.h"
 
 
-// Returns the set of recommended books for the target patron id.
-//
-// For this, using a Stack, search the books that are frequently borrowed by users in the neighborhood and
-// filter out the books that the target user has already borrowed.
-// Then rank the remaining books based on popularity or ratings within the neighborhood
-// and return the set of recommended books.
-// To implement this function:
-// - Create a HashTable to store the frequency of each book borrowed by users in the neighborhood.
-// - Iterate through the frequency map and add books that haven't been borrowed by the target patron id
-// to the recommendedBooks UnorderedSet.
-// return the recommendedBooks UnorderedSet.
 UnorderedSet<Book> BookRecommendation::getRecommendedBooks(const UnorderedSet<std::string> &neighborhood,
                                                            const std::string &targetUserID) {
     Stack<Book> bookStack{};

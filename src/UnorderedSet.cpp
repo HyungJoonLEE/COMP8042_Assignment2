@@ -8,6 +8,7 @@ UnorderedSet<Key>::UnorderedSet() {
     root = 0;
 }
 
+
 template<typename Key>
 UnorderedSet<Key>::~UnorderedSet() {
     clearRecursive(root);

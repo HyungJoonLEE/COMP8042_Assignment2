@@ -1,6 +1,23 @@
 #include "../include/HashTable.h"
 
 
+inline unsigned int hashKey(const int &key, int tableSize) {
+    unsigned int index = 0, prime = 73;
+    index = index * prime;
+    return index % tableSize;
+}
+
+inline unsigned int hashKey(const std::string &key, int tableSize) {
+    unsigned int index = 0, prime = 73;
+
+    for (char c : key) {
+        index = index + c * prime;
+    }
+
+    return index % tableSize;
+}
+
+
 template<typename KeyType, typename ValueType>
 HashTable<KeyType, ValueType>::HashTable(unsigned int size, double threshold) {
     this->tableSize = size;
@@ -56,7 +73,7 @@ void HashTable<KeyType, ValueType>::insert(const KeyType &key, const ValueType &
         rehash();
     }
 
-    index = std::hash<KeyType>{}(key) % tableSize;
+    index = hashKey(key, tableSize);
     offset = 0;
     hop = 1;
     while (offset < hopRange) {
@@ -89,7 +106,7 @@ void HashTable<KeyType, ValueType>::insert(const KeyType &key, const ValueType &
 //TODO: change index -> not using hash
 template<typename KeyType, typename ValueType>
 ValueType *HashTable<KeyType, ValueType>::search(const KeyType &key) {
-    unsigned int index = std::hash<KeyType>{}(key) % tableSize;
+    unsigned int index = hashKey(key, tableSize);
     while (hashTable[index].occupied) {
         if (hashTable[index].key == key) {
             return &hashTable[index].value;
@@ -102,7 +119,7 @@ ValueType *HashTable<KeyType, ValueType>::search(const KeyType &key) {
 
 template<typename KeyType, typename ValueType>
 bool HashTable<KeyType, ValueType>::remove(const KeyType &key) {
-    unsigned int index = std::hash<KeyType>{}(key) % tableSize;
+    unsigned int index = hashKey(key, tableSize);
     while (hashTable[index].occupied) {
         if (hashTable[index].key == key) {
             hashTable[index].occupied = false;
