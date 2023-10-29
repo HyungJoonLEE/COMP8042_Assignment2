@@ -1,14 +1,39 @@
 #include "../include/HashTable.h"
 
 
+inline bool isPrime(int num) {
+    if (num <= 1) return false;
+    if (num == 2) return true;
+    if (num % 2 == 0) return false; // All even numbers except 2 are not prime
+    for (int i = 3; i * i <= num; i += 2) {
+        if (num % i == 0) return false;
+    }
+    return true;
+}
+
+
+inline int largestPrimeBelow(int n) {
+    for (int i = n - 1; i >= 2; i--) {
+        if (isPrime(i)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+
 inline unsigned int hashKey(const int &key, int tableSize) {
-    unsigned int index = 0, prime = 73;
+    unsigned int index = 0;
+    unsigned int prime = largestPrimeBelow(tableSize);
+
     index = index * prime;
     return index % tableSize;
 }
 
+
 inline unsigned int hashKey(const std::string &key, int tableSize) {
-    unsigned int index = 0, prime = 73;
+    unsigned int index = 0;
+    unsigned int prime = largestPrimeBelow(tableSize);
 
     for (char c : key) {
         index = index + c * prime;
@@ -103,7 +128,7 @@ void HashTable<KeyType, ValueType>::insert(const KeyType &key, const ValueType &
     }
 }
 
-//TODO: change index -> not using hash
+
 template<typename KeyType, typename ValueType>
 ValueType *HashTable<KeyType, ValueType>::search(const KeyType &key) {
     unsigned int index = hashKey(key, tableSize);
