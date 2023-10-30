@@ -1,4 +1,5 @@
 #include "../include/BookRecommendation.h"
+#include "../include/HashTable.h"
 #include "../include/Stack.h"
 
 
