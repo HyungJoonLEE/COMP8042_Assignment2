@@ -1,7 +1,11 @@
 #include "../include/UnorderedSet.h"
-#include "../include/Stack.h"
 
 
+/**
+* @brief Default constructor for the UnorderedSet class.
+*
+* Initializes the set with size 0 and a null root pointer.
+*/
 template<typename Key>
 UnorderedSet<Key>::UnorderedSet() {
     setSize = 0;
@@ -9,12 +13,26 @@ UnorderedSet<Key>::UnorderedSet() {
 }
 
 
+/**
+* @brief Destructor for the UnorderedSet class.
+*
+* Recursively clears all nodes and deallocates memory associated with the set.
+*/
 template<typename Key>
 UnorderedSet<Key>::~UnorderedSet() {
     clearRecursive(root);
 };
 
 
+/**
+ * @brief Returns an iterator pointing to the first element in the set.
+ *
+ * If the set is empty, the returned iterator will be equivalent to end().
+ * Otherwise, it returns an iterator pointing to the leftmost element,
+ * which is the smallest element in the set.
+ *
+ * @return Iterator pointing to the first element or end() if the set is empty.
+ */
 template <typename Key>
 typename UnorderedSet<Key>::Iterator UnorderedSet<Key>::begin() const {
     Node<Key>* temp = root;
@@ -27,12 +45,31 @@ typename UnorderedSet<Key>::Iterator UnorderedSet<Key>::begin() const {
 }
 
 
+/**
+ * @brief Returns an iterator pointing past the last element in the set.
+ *
+ * The returned iterator does not point to any actual element in the set.
+ * It can be used to check if another iterator has reached the end.
+ * Dereferencing the end iterator is undefined behavior.
+ *
+ * @return Iterator pointing past the last element.
+ */
 template <typename Key>
 typename UnorderedSet<Key>::Iterator UnorderedSet<Key>::end() const {
     return Iterator(nullptr);
 }
 
 
+/**
+ * @brief Inserts a new key into the unordered set.
+ *
+ * If the key is already present in the set, the function does nothing and returns false.
+ * Otherwise, the key is inserted, and any RED-RED violation in the underlying Red-Black Tree
+ * is corrected. The size of the set is also updated.
+ *
+ * @param key The key value to be inserted into the set.
+ * @return True if the insertion was successful. False if the key was already present.
+ */
 template<typename Key>
 bool UnorderedSet<Key>::insert(const Key &key) {
     Node<Key> *current = nullptr, *parent = nullptr;
@@ -74,6 +111,15 @@ bool UnorderedSet<Key>::insert(const Key &key) {
 }
 
 
+/**
+ * @brief Searches for a key in the unordered set.
+ *
+ * This method traverses the underlying Red-Black Tree to determine
+ * if the specified key is present in the set or not.
+ *
+ * @param key The key value to be searched for in the set.
+ * @return True if the key is found in the set. False otherwise.
+ */
 template<typename Key>
 bool UnorderedSet<Key>::search(const Key &key) const {
     Node<Key>* current = root;
@@ -86,6 +132,22 @@ bool UnorderedSet<Key>::search(const Key &key) const {
 }
 
 
+/**
+ * @brief Erases a key from the unordered set.
+ *
+ * This method attempts to remove the specified key from the set.
+ * The deletion process involves handling three cases:
+ * 1. Node with no children.
+ * 2. Node with one child.
+ * 3. Node with two children.
+ *
+ * After the key has been removed, the method ensures the properties
+ * of the Red-Black Tree are preserved, especially the Black height
+ * property. This might involve multiple rotations and color changes.
+ *
+ * @param key The key value to be erased from the set.
+ * @return True if the key was found and successfully removed. False otherwise.
+ */
 template<typename Key>
 bool UnorderedSet<Key>::erase(const Key &key) {
     Node<Key>* target = root;
@@ -103,7 +165,7 @@ bool UnorderedSet<Key>::erase(const Key &key) {
 
     parent = target->parent;
 
-    // Node with no child
+    // no child
     if (!target->left && !target->right) {
         if (!parent) {
             // Node is root
@@ -124,24 +186,24 @@ bool UnorderedSet<Key>::erase(const Key &key) {
         }
     }
 
-    // Node with one child
+    // one child
     else if ((target->left && !target->right) || (!target->left && target->right)) {
         deleteOneChild(target);
         delete target;
     }
 
-    // Node with two children
+    // two children
     else {
         Node<Key>* successor = target->right;
 
         while (successor->left)
             successor = successor->left;
 
-        target->key = successor->key; // Copy successor's value to target
+        target->key = successor->key;
 
         parent = successor->parent;
         if (parent->left == successor)
-            parent->left = successor->right;  // Assuming successor is always a leaf or has one child (right)
+            parent->left = successor->right;
         else
             parent->right = successor->right;
 
@@ -163,6 +225,15 @@ bool UnorderedSet<Key>::erase(const Key &key) {
 }
 
 
+/**
+ * @brief Clears the contents of the unordered set.
+ *
+ * This method removes all elements from the unordered set.
+ * It uses a recursive helper function to delete nodes in
+ * a post-order manner to ensure proper deallocation.
+ * After clearing the set, the root is set to nullptr and the
+ * size is reset to zero.
+ */
 template<typename Key>
 void UnorderedSet<Key>::clear() {
     clearRecursive(root);
@@ -171,19 +242,43 @@ void UnorderedSet<Key>::clear() {
 }
 
 
+/**
+ * @brief Retrieves the number of elements in the unordered set.
+ *
+ * This method returns the number of elements contained in the
+ * unordered set, represented by the 'setSize' member variable.
+ *
+ * @return size_t - The number of elements in the set.
+ */
 template<typename Key>
 size_t UnorderedSet<Key>::size() const {
     return setSize;
 }
 
 
+/**
+ * @brief Updates the size of the UnorderedSet.
+ *
+ * This method recalculates the size of the entire set by invoking the
+ * 'getSize()' method with the root node. The result is then assigned
+ * to the 'setSize' member variable, ensuring it remains updated.
+ */
 template<typename Key>
 void UnorderedSet<Key>::updateSize() {
     setSize = getSize(root);
 }
 
 
-//Recursively calculates the size of the subtree rooted at the given node:
+/**
+ * @brief Recursively calculates the size of the subtree rooted at the given node.
+ *
+ * This method traverses the subtree rooted at the specified node and returns the
+ * number of nodes in that subtree. It uses a post-order traversal approach to
+ * calculate the size, which includes the current node, its left subtree, and its right subtree.
+ *
+ * @param node Pointer to the root node of the subtree whose size is to be calculated.
+ * @return size_t - The number of nodes in the subtree rooted at the given node.
+ */
 template<typename Key>
 size_t UnorderedSet<Key>::getSize(Node<Key> *node) const {
     if (node == nullptr)
@@ -193,6 +288,22 @@ size_t UnorderedSet<Key>::getSize(Node<Key> *node) const {
 }
 
 
+/**
+ * @brief Fixes the Red-Red color violation in the Red-Black tree.
+ *
+ * When a Red-Red violation occurs, this function is responsible for
+ * balancing the colors by a combination of recoloring and rotations.
+ * The Red-Black tree properties are restored after these adjustments.
+ *
+ * @param node A pointer to the Node<Key> that may cause a violation
+ * due to its color and its parent's color both being red.
+ *
+ * Note:
+ * 1. If the uncle node is red, only recoloring is needed.
+ * 2. If the uncle node is black, rotations are applied depending on the
+ *    position of the node in relation to its parent.
+ * 3. After any adjustments, the root node is always recolored to black.
+ */
 template<typename Key>
 void UnorderedSet<Key>::fixRedRedViolation(Node<Key> *node) {
     Node<Key> *parent = nullptr;
@@ -205,13 +316,12 @@ void UnorderedSet<Key>::fixRedRedViolation(Node<Key> *node) {
         parent = node->parent;
         grandParent = node->parent->parent;
 
-        /* Node Parent is left child of Grand-parent */
+        // Node Parent is left child of Grand-parent
         if (parent == grandParent->left) {
             Node<Key> *uncle_pt = grandParent->right;
 
-            /* Case : 1
-               Uncle is also red
-               Only Recoloring required */
+            // TODO: Uncle is also red
+            //  Only Recoloring required
             if (uncle_pt != nullptr && uncle_pt->color == Color::RED) {
                 grandParent->color = Color::RED;
                 parent->color = Color::BLACK;
@@ -219,18 +329,16 @@ void UnorderedSet<Key>::fixRedRedViolation(Node<Key> *node) {
                 node = grandParent;
             }
             else {
-                /* Case : 2
-                   Node is right child of its parent
-                   Left-rotation required */
+                // TODO: Node is right child of its parent
+                //  Left-rotation required
                 if (node == parent->right) {
                     rotateLeft(parent);
                     node = parent;
                     parent = node->parent;
                 }
 
-                /* Case : 3
-                   Node is left child of its parent
-                   Right-rotation required */
+                // TODO: Node is left child of its parent
+                //  Right-rotation required
                 rotateRight(grandParent);
                 tempColor = parent->color;
                 parent->color = grandParent->color;
@@ -239,13 +347,12 @@ void UnorderedSet<Key>::fixRedRedViolation(Node<Key> *node) {
             }
         }
 
-        /* Node Parent is right child of Grand-parent */
+        // Node Parent is right child of Grand-parent
         else {
             Node<Key> *uncle_pt = grandParent->left;
 
-            /*  Case : 1
-                Uncle is also red
-                Only Recoloring required */
+            // TODO: Uncle is also red
+            //  Only Recoloring required
             if ((uncle_pt != nullptr) && (uncle_pt->color == Color::RED)) {
                 grandParent->color = Color::RED;
                 parent->color = Color::BLACK;
@@ -253,18 +360,16 @@ void UnorderedSet<Key>::fixRedRedViolation(Node<Key> *node) {
                 node = grandParent;
             }
             else {
-                /* Case : 2
-                   Node is left child of its parent
-                   Right-rotation required */
+                // TODO: Node is left child of its parent
+                //  Right-rotation required
                 if (node == parent->left) {
                     rotateRight(parent);
                     node = parent;
                     parent = node->parent;
                 }
 
-                /* Case : 3
-                   Node is right child of its parent
-                   Left-rotation required */
+                // TODO: Node is right child of its parent
+                //  Left-rotation required
                 rotateLeft(grandParent);
                 tempColor = parent->color;
                 parent->color = grandParent->color;
@@ -278,6 +383,27 @@ void UnorderedSet<Key>::fixRedRedViolation(Node<Key> *node) {
 }
 
 
+/**
+ * @brief Performs a left rotation on the specified node of the Red-Black tree.
+ *
+ * A left rotation is applied when certain imbalances occur in the tree
+ * during insertion or deletion operations. The method modifies the tree
+ * structure by re-arranging nodes and updating their parent-child relationships.
+ *
+ * @param node A pointer to the Node<Key> that acts as the pivot for the left rotation.
+ *
+ *        node                       right
+ *       /    \                     /    \
+ *      A    right        =>      node    C
+ *          /    \              /    \
+ *         B      C            A      B
+ *
+ * Note:
+ * 1. If the node undergoing rotation has a right child, that child becomes
+ *    the new parent after rotation.
+ * 2. The previous parent of the node (if any) will now point to this right child.
+ * 3. The left child of the right child (if any) will become the new right child of the node.
+ */
 template<typename Key>
 void UnorderedSet<Key>::rotateLeft(Node<Key> *node) {
     Node<Key> *right = node->right;
@@ -303,6 +429,27 @@ void UnorderedSet<Key>::rotateLeft(Node<Key> *node) {
 }
 
 
+/**
+ * @brief Performs a right rotation on the specified node of the Red-Black tree.
+ *
+ * A right rotation is applied when certain imbalances occur in the tree
+ * during insertion or deletion operations. The method modifies the tree
+ * structure by re-arranging nodes and updating their parent-child relationships.
+ *
+ * @param node A pointer to the Node<Key> that acts as the pivot for the right rotation.
+ *
+ *        node                       left
+ *       /    \                     /    \
+ *     left    C        =>        A     node
+ *    /    \                           /    \
+ *   A      B                         B      C
+ *
+ * Note:
+ * 1. If the node undergoing rotation has a left child, that child becomes
+ *    the new parent after rotation.
+ * 2. The previous parent of the node (if any) will now point to this left child.
+ * 3. The right child of the left child (if any) will become the new left child of the node.
+ */
 template<typename Key>
 void UnorderedSet<Key>::rotateRight(Node<Key> *node) {
     Node<Key> *left = node->left;
@@ -328,7 +475,28 @@ void UnorderedSet<Key>::rotateRight(Node<Key> *node) {
 }
 
 
-//Deletes a node with only one child in the Red-Black Tree:
+/**
+ * @brief Deletes a node with only one child from the Red-Black tree.
+ *
+ * This method is specifically designed to handle the scenario where the node
+ * to be deleted has exactly one child (either left or right). The method ensures
+ * that the Red-Black tree properties are maintained after the node's deletion.
+ *
+ * @param node A pointer to the Node<Key> that is to be deleted.
+ *             This node should have either a left child or a right child, but not both.
+ *
+ * If the node being deleted is the root, its single child becomes the new root.
+ * The color of the child is set to BLACK.
+ * The parent pointer of the child is updated to point to the grandparent of the node.
+ * If the child's color is BLACK (after deletion), the tree may violate the Red-Black
+ * properties, hence 'deleteFix()' is called to fix any potential violations.
+ *
+ * Note:
+ * 1. The method assumes that the node provided as the parameter has only one child.
+ * 2. The 'Color::BLUE' indicates a deleting (leaf)node which arises during deletion in
+ *    a Red-Black tree. This is a temporary state used to handle deletion scenarios
+ *    and will be resolved to maintain the Red-Black tree properties.
+ */
 template<typename Key>
 void UnorderedSet<Key>::deleteOneChild(Node<Key> *node) {
     Node<Key>* child = (node->left) ? node->left : node->right;  // Determine the existing child
@@ -358,6 +526,32 @@ void UnorderedSet<Key>::deleteOneChild(Node<Key> *node) {
 }
 
 
+/**
+ * @brief Fixes the Red-Black tree after a deletion operation.
+ *
+ * This method is used to restore the properties of the Red-Black tree after a node has been
+ * deleted. Deletion may cause imbalances and property violations, which are addressed by this
+ * method through a series of rotations and color changes.
+ *
+ * @param node A pointer to the Node<Key> that is being fixed after the deletion.
+ *
+ * This method operates in a loop until the node is either the root or its color is not BLUE.
+ * During each iteration, the sibling node of the given node is identified.
+ * Depending on the color of the sibling and the colors of the sibling's children, various
+ * operations are performed - rotations (either left or right) and color changes.
+ * These operations are aimed at balancing the tree and ensuring that the Red-Black properties
+ * are maintained. Once the tree is fixed, the color of the node is set to BLACK.
+ *
+ * Note:
+ * 1. The BLUE color here represents a double black situation caused by the deletion in a Red-Black tree.
+ * 2. The main aim of the fix operation is to remove the double black (BLUE) by redistributing the
+ *    color or by merging nodes.
+ * 3. The while loop ensures that the tree is fixed in an iterative manner, starting from the
+ *    deleted node's position and moving up the tree if necessary.
+ * 4. The function takes into account various cases like whether the sibling is red or black,
+ *    or if one of the sibling's children is red, and so on.
+ *
+ */
 template<typename Key>
 void UnorderedSet<Key>::deleteFix(Node<Key> *node) {
     Node<Key>* sibling;
@@ -428,6 +622,19 @@ void UnorderedSet<Key>::deleteFix(Node<Key> *node) {
 }
 
 
+/**
+ * @brief Recursively clears the Red-Black tree.
+ *
+ * This method recursively traverses the Red-Black tree in a post-order
+ * and deletes all the nodes, effectively clearing the tree.
+ *
+ * @param node A pointer to the current Node<Key> being processed.
+ *
+ * If the node is nullptr, the function returns immediately.
+ * The method calls itself recursively for the left child of the node.
+ * The method calls itself recursively for the right child of the node.
+ * If reached to the leaf node, delete node
+ */
 template<typename Key>
 void UnorderedSet<Key>::clearRecursive(Node<Key> *node) {
     if (node == NULL) return;
@@ -435,4 +642,3 @@ void UnorderedSet<Key>::clearRecursive(Node<Key> *node) {
     clearRecursive(node->right);
     delete node;
 }
-
